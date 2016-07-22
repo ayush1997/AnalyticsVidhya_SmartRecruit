@@ -1,6 +1,7 @@
 import pandas as pd
 from scipy.stats import pointbiserialr, spearmanr
 from datetime import datetime
+import numpy as np
 
 def load_train():
     df =  pd.read_csv("dataset/Train_pjb2QcD.csv")
@@ -43,7 +44,7 @@ def load_train():
     df = df.drop(["Applicant_BirthDate","Application_Receipt_Date","Manager_DoB","Manager_DOJ"],axis=1)
 
     print df.head()
-    df.to_csv("dataset/rain_new.csv",index=False)
+    df.to_csv("dataset/train_new.csv",index=False)
 
     # for i in columns:
     #     print i
@@ -92,29 +93,38 @@ def ret_man_age(df):
         return None
 
 def correlation():
-    df =  pd.read_csv("dataset/Train_pjb2QcD.csv")
-
-    columns = ["Applicant_Gender"]
+    df =  pd.read_csv("dataset/train_new.csv")
+    df = df.dropna(axis=0,how="any")
+    print df.describe()
+    print df.head()
+    param=[]
+    correlation=[]
+    abs_corr=[]
+    covariance = []
+    columns = ["Applicant_Gender","App_age","Applicant_Occupation","Applicant_Qualification","Applicant_Marital_Status","Manager_age","Manager_exp","Manager_Grade","Manager_Status","Manager_Gender","Manager_Business","Manager_Business2","Manager_Num_Coded","Manager_Num_Products","Manager_Num_Products2","Manager_Num_Application","Manager_Current_Designation"]
     for c in columns:
         #Check if binary or continuous
+
         if len(df[c].unique())<=2:
-            corr = spearmanr(df['Survived'],df[c])[0]
-            y = df['Survived']
+            corr = spearmanr(df['Business_Sourced'],df[c])[0]
+            print "spear",c,corr
+            y = df['Business_Sourced']
             x = df[c]
             X = np.vstack((y,x))
             covar = np.cov(X)
         else:
-            corr = pointbiserialr(df['Survived'],df[c])[0]
-            print corr
-            y = df['Survived']
+            corr = pointbiserialr(df['Business_Sourced'],df[c])[0]
+            print "point",c,corr
+            y = df['Business_Sourced']
             x = df[c]
             X = np.vstack((y,x))
             covar = np.cov(X)
         param.append(c)
         correlation.append(corr)
         abs_corr.append(abs(corr))
-        covariance.append(covar[0][1])
+        # covariance.append(covar[0][1])
     print covariance
 
 if __name__ == "__main__":
-    load_train()
+    # load_train()
+    correlation()
