@@ -2,6 +2,8 @@ import pandas as pd
 from scipy.stats import pointbiserialr, spearmanr
 from datetime import datetime
 import numpy as np
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
 
 columns = ['ID','Office_PIN','Application_Receipt_Date','Applicant_City_PIN',
 'Applicant_Gender','Applicant_BirthDate','Applicant_Marital_Status',
@@ -44,11 +46,12 @@ def load_train(filename,dest):
 
     # print df.describe()
 
-    print df["App_age"].mean()
-    df['App_age'] = df['App_age'].fillna(df["App_age"].mean())
-    print df["Manager_age"].mean()
-    df['Manager_age'] = df['Manager_age'].fillna(df["Manager_age"].mean())
-    df['Manager_exp'] = df['Manager_exp'].fillna(df["Manager_exp"].mean())
+
+    print df["App_age"].median()
+    df['App_age'] = df['App_age'].fillna(df["App_age"].median())
+    print df["Manager_age"].median()
+    df['Manager_age'] = df['Manager_age'].fillna(df["Manager_age"].median())
+    df['Manager_exp'] = df['Manager_exp'].fillna(df["Manager_exp"].median())
     df['Applicant_Qualification'] = df['Applicant_Qualification'].fillna(1)
     df['Applicant_Gender'] = df['Applicant_Gender'].fillna(0)
     df['Manager_Gender'] = df['Manager_Gender'].fillna(0)
@@ -57,13 +60,29 @@ def load_train(filename,dest):
 
     c = ['Manager_Num_Application','Manager_Num_Coded','Manager_Business','Manager_Num_Products','Manager_Business2','Manager_Num_Products2']
     for i in c:
-        df[i] = df[i].fillna(df[i].mean())
+        df[i] = df[i].fillna(df[i].median())
 
-    df = df.drop(["Applicant_BirthDate","Application_Receipt_Date","Manager_DoB","Manager_DOJ","Applicant_City_PIN","Manager_Grade","Office_PIN","Applicant_Marital_Status","Manager_Num_Coded","Manager_Num_Products","Manager_Num_Products2","Manager_Current_Designation","Manager_Joining_Designation","Manager_exp"],axis=1)
-
+    y = df["Business_Sourced"]
+    df = df.drop(["ID","Business_Sourced","Applicant_BirthDate","Application_Receipt_Date","Manager_DoB","Manager_DOJ","Applicant_City_PIN","Manager_Grade","Office_PIN","Applicant_Marital_Status","Manager_Current_Designation","Manager_Joining_Designation"],axis=1)
+    # print df.describe()
+    # print df.head(10)
     print df.columns.values
-    print df.describe()
-    df.to_csv(dest,index=False)
+    X=df
+    estimator = LogisticRegression()
+    selector = RFE(estimator ,step=1)
+    selector = selector.fit(X, y)
+    print selector.n_features_
+    print selector.support_
+    print selector.ranking_
+    print selector.estimator_
+
+
+
+    # df = df.drop(["Applicant_BirthDate","Application_Receipt_Date","Manager_DoB","Manager_DOJ","Applicant_City_PIN","Manager_Grade","Office_PIN","Applicant_Marital_Status","Manager_Num_Coded","Manager_Num_Products","Manager_Num_Products2","Manager_Current_Designation","Manager_Joining_Designation","Manager_exp"],axis=1)
+
+    # print df.columns.values
+    # print df.describe()
+    # df.to_csv(dest,index=False)
 
     # for i in columns:
     #     print i
@@ -145,14 +164,27 @@ def correlation():
     print covariance
 
 def ana_test():
-    df = pd.read_csv("dataset/test_new.csv")
-    print df.describe()
+    df = pd.read_csv("dataset/train_new.csv")
+    print df["Business_Sourced"].describe()
     # for i in columns[:-1]:
     #     print i
     #     print df[i].describe()
     #     print df[i].unique().size
 if __name__ == "__main__":
     # load_train("dataset/Test_wyCirpO.csv","dataset/test_new.csv")
-    # load_train("dataset/Train_pjb2QcD.csv","dataset/train_new.csv")
+    load_train("dataset/Train_pjb2QcD.csv","dataset/train_new.csv")
     # correlation()
-    ana_test()
+    # ana_test()
+
+
+
+# spear Applicant_Gender 0.0501596389925
+# point App_age 0.0664923157893
+# spear Applicant_Occupation -0.0293786499627
+# spear Applicant_Qualification -0.0402997522036
+# point Manager_age 0.0236875061366
+# spear Manager_Status 0.0424019758619
+# spear Manager_Gender 0.0329010430742
+# point Manager_Business 0.0304204461244
+# point Manager_Business2 0.0299538181628
+# point Manager_Num_Application -0.0362155467124
